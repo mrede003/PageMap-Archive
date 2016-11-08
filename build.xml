@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="build" name="Phase3Blue4" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<property name="ivy.install.version" value="2.3.0"/>
+	<property name="ivy.jar.dir" value="${basedir}/ivy"/>
+	<property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+	<property name="javadocs.dir" value="${basedir}/javadocs"/>
+	<property name="libs.dir" location="target" />
+	
+	<path id="testCompilationPath">
+	    <pathelement path="target/classes"/>
+	    <path refid="ivy.path"/>
+	</path>
+	
+	<path id="nonTestCompilationPath">
+		    <pathelement path="target/test-classes"/>
+		    <path refid="ivy.path"/>
+	</path>
+	
+	 <path id="testExecutionPath">
+	    <pathelement path="target/classes"/>
+	    <pathelement path="target/test-classes"/>
+	    <path refid="ivy.path"/>
+	 </path>
+	
+	<path id="build.classpath">
+		<fileset dir ="${libs.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>	
+	
+	  <target name="download-ivy" unless="skip.download">
+	    <mkdir dir="${ivy.jar.dir}"/>
+	    <echo message="installing ivy..."/>
+	    <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
+	     dest="${ivy.jar.file}" skipexisting="true"/>
+	  </target>
+	  <target name="install-ivy" depends="download-ivy" 
+	      description="--> install ivy">
+	    <path id="ivy.lib.path">
+	      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+	    </path>
+	    <taskdef resource="org/apache/ivy/ant/antlib.xml" 
+	         uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+	  </target>
+
+	<target name="resolve-ivy" depends="install-ivy">
+	    <ivy:resolve/>
+		<ivy:retrieve pattern="target/[artifact]-[type].[ext]"/>
+	    <ivy:cachepath pathid="ivy.path" />
+	  </target>
+
+	<target name="compile" depends="resolve-ivy">
+	    <mkdir dir="target/classes"/>
+	    <javac srcdir="src/edu/odu/cs/cs350/blue4" destdir="target/classes" source="1.7" includeantruntime="false"
+	    	excludes="*Testing.java" >
+	    	<classpath refid="nonTestCompilationPath"/>
+		</javac>
+	  </target>
+	
+	
+	
+	<target name="compile-tests" depends="compile">
+	    <mkdir dir="target/test-classes"/>
+	    <javac srcdir="src/testing" destdir="target/test-classes" source="1.7" includeantruntime="false"
+	    	includes="*Testing.java" >
+	      <classpath refid="testCompilationPath"/>
+	    </javac>
+	  </target>
+	
+	 <target name="test" depends="compile-tests">
+	    <mkdir dir="target/test-results/details"/>
+	    <junit printsummary="yes" 
+	       haltonfailure="no" fork="yes" showoutput="yes">
+	      <classpath refid="testExecutionPath"/>
+	      <formatter type="xml"/>
+	      <batchtest todir="target/test-results/details">
+	         <fileset dir="target/test-classes">
+	            <include name="**/*Test*.class"/>
+	         </fileset>
+	      </batchtest>
+	    </junit>
+	    <junitreport todir="target/test-results">
+	      <fileset dir="target/test-results/details">
+	        <include name="TEST-*.xml"/>
+	      </fileset>
+	      <report format="frames" todir="target/test-results/html"/>
+	    </junitreport>
+	  </target>
+
+	  <target name="build"  depends="test">
+	    <jar destfile="target/Blue4-PageMap.jar" basedir="target/classes" 
+	    	 
+	    	excludes="Blue4-PageMap.jar">
+            <manifest>
+                <attribute name="Main-Class" value="edu.odu.cs.cs350.blue4.Phase3"/>
+            	<attribute name="Class-Path" value="gson-jar.jar"/>
+            </manifest>
+        </jar>	  	
+	    <zip destfile="Blue4-PageMap-src.zip">
+	      <fileset dir=".">
+	        <include name="target/*.jar"/>
+	      	<include name="pagemap.bat"/>
+	      	<include name="pagemap.sh"/>
+	      </fileset>
+	    </zip>
+	  </target>
+
+
+    <target name="run" depends="build">
+        <java jar="target/Blue4-PageMap.jar" fork="true">
+        	<arg line="target/TestDirectory"/>
+        </java>
+    </target>	
+
+	  <target name="clean">
+	    <delete dir="target"/>
+	  </target>
+
+	  <target name="cleaner" depends="clean">
+	    <delete dir="ivy"/>
+	  </target>	
+	 
+	
+	 <target name="doc" depends="build" description="javadoc documentation">
+	  <javadoc sourcepath="${basedir}/src" destdir="${javadocs.dir}" classpathref="build.classpath"/>
+	</target>
+	
+</project>

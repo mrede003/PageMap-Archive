@@ -1,0 +1,1 @@
+java -jar %~dp0\target\Blue4-PageMap.jar %*
